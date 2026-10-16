@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "what_this_is": "The machine-readable half of every jurisdiction pack, emitted by scripts/build.mjs from jurisdictions/<code>/pack.yaml. meta, review and capabilities ONLY: no legal answer is emitted here, so the engine cannot render one. ADR 0008 decision 6.",
+  "generated_from": "jurisdictions",
+  "codes": [
+    "ca"
+  ],
+  "packs": {
+    "ca": {
+      "meta": {
+        "jurisdiction": "ca",
+        "subdivision": null,
+        "name": "Canada",
+        "legal_system": "mixed",
+        "language": "en, fr",
+        "version": 0
+      },
+      "review": {
+        "state": "unreviewed",
+        "reviewer_role": null,
+        "reviewed_scope": [],
+        "unreviewed": [
+          "all"
+        ],
+        "supersedes": null
+      },
+      "capabilities": {
+        "hazard_wording_available": false,
+        "barred_reasoning_list_available": false,
+        "preservation_demand_binds": "unknown",
+        "demand_templates_available": false,
+        "retention_figures_sourced": false,
+        "subject_access_route_available": false,
+        "advertising_rules_reviewed": false,
+        "examiner_line_defined": false
+      }
+    }
+  }
+}

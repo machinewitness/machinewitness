@@ -1,0 +1,199 @@
+name: gate
+
+# CI LOGS ARE PUBLIC ON A PUBLIC REPOSITORY.
+# A gate that prints its matching line into a public log has published the thing it caught.
+# turning the leak detector into the leak. So the case-fact job reports CLASS NAMES AND COUNTS
+# and never the matched text. Read the detail locally.
+#
+# The same reasoning applies to the freshness job, which prints a NAME-AND-COUNT diffstat rather
+# than diff content.
+#
+# 🔴 EVERY JOB HERE PRINTS WHAT IT SCANNED. A gate that scans nothing prints the same green as a
+# clean tree. That has happened in this project twice, once in the gate, once in the wrapper
+# written to report the gate, and in the second case a repository sat with a green run while
+# nothing was read at all. Read the counts in the log; the exit code alone is not the answer.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  casefact-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Case-fact gate (counts and class names only. Never the matched line)
+        run: ./ops/ci_casefact.sh
+
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: The check must be known to fire, not just to pass
+        run: python3 ops/check_contracts.py --selftest
+      - name: No dangling paths, no pack claiming a review it cannot show
+        run: python3 ops/check_contracts.py
+
+  contract-json-matches-yaml:
+    # 🔴 The contract is the program. The build emits a JSON form plus a digest, the engine reads
+    # the JSON, and this job is the only thing standing between those two artifacts and a silent
+    # divergence at the one place fidelity is load-bearing.
+    #
+    # ⚠️ It CALLS the build and the test suite. It does not reimplement either. A CI-local
+    # reimplementation of an equivalence check is a second parser that can agree with neither.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install the pinned build-time parser (build only. Nothing here ships a dependency)
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+      - name: Build the contract
+        run: node scripts/build.mjs
+      - name: Deep-compare the generated contract against the source, and everything else
+        run: npm test
+
+  generated-tree-fresh:
+    # skill/ is source. .claude/ and .codex/ are generated. A hand-edit of a generated tree must
+    # FAIL here, ADR 0007 decision 2 and its Enforcement section. Provider outputs diverge
+    # silently otherwise, and the divergence stays invisible until a person on the wrong provider
+    # gets a different flow.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install the pinned build-time parser
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+      - name: Rebuild every generated tree
+        run: node scripts/build.mjs
+      - name: A rebuild must change nothing that is committed
+        run: |
+          set -euo pipefail
+          # ⚠️ PROVE THE INPUT IS NON-EMPTY BEFORE JUDGING IT. "no diff" and "nothing was
+          # generated" are indistinguishable to git, so a build that emitted zero files would
+          # pass this job in silence, the exact failure mode the header warns about.
+          generated=0
+          for d in .claude .codex skill/data; do
+            if [ -d "$d" ]; then
+              n=$(git ls-files "$d" | wc -l | tr -d ' ')
+              echo "tracked generated files under $d/: $n"
+              generated=$((generated + n))
+            else
+              echo "::error::$d/ does not exist. The build did not produce it"
+              exit 1
+            fi
+          done
+          if [ "$generated" -eq 0 ]; then
+            echo "::error::zero tracked generated files. Refusing to report a fresh tree on an empty comparison"
+            exit 1
+          fi
+          echo "comparing a rebuild against $generated tracked generated file(s)"
+          # Names and counts only, never diff content, see the header.
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::a rebuild changed the working tree. skill/ is source; .claude/ and .codex/ are generated. Edit skill/ and rebuild, then commit the output."
+            git --no-pager diff --stat
+            git status --porcelain
+            exit 1
+          fi
+          echo "generated trees are fresh"
+
+  no-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Standard library only, and no network from any script
+        run: |
+          # ⚠️ PROVE THE INPUT IS NON-EMPTY FIRST. The check below is an ABSENCE assertion, and
+          # "not found" is indistinguishable from "nothing read" to a text search. With zero
+          # Python files it would pass having examined nothing. This is an addition to the
+          # original check, not a change to it.
+          py=$(find . -name '*.py' -not -path './.git/*' | wc -l | tr -d ' ')
+          echo "python files scanned for network imports: $py"
+          if [ "$py" -eq 0 ]; then
+            echo "::error::no Python files found. Refusing to report a pass on an empty scan"
+            exit 1
+          fi
+          if grep -rlnE '^[[:space:]]*(import|from)[[:space:]]+(requests|httpx|urllib3|aiohttp|urllib\.request|socket)([[:space:]]|\.|$)' --include='*.py' .; then
+            echo "::error::a network library is imported. Everything here must run offline"
+            exit 1
+          fi
+
+      # 🔴 SCOPED REPLACEMENT, AND THE REASON IT IS SCOPED RATHER THAN DELETED.
+      #
+      # The previous repository shape asserted that requirements.txt, Pipfile, pyproject.toml and
+      # package.json ALL simply did not exist. That was correct there, it shipped documents.
+      # This repository ships a BUILD: ADR 0007 decision 6 records that neither language's
+      # standard library has a YAML parser, and contract fidelity is the one place fidelity is
+      # load-bearing, so a pinned build-time parser is the single permitted dependency anywhere
+      # in the tree. package.json therefore MUST exist, and copying the old job verbatim would
+      # red-line this repository for a legitimate reason.
+      #
+      # ⛔ Deleting the check was not available. Never weaken a gate to make a run green. So the
+      # invariant is restated at the level that actually matters, and it is now STRONGER than the
+      # file-existence test it replaces, because "package.json is absent" never said anything at
+      # all about what a present one contained:
+      #
+      #   1. package.json EXISTS and parses            (fail closed on absent or malformed)
+      #   2. dependencies / peerDependencies / optionalDependencies are absent or EMPTY
+      #   3. every devDependency is a YAML parser by name, and nothing else is permitted
+      #   4. every devDependency is pinned to an exact version, "pinned" is the word ADR 0007
+      #      uses, and a range is not pinned
+      #   5. the names and the count are PRINTED, so a human reads what was actually checked
+      #
+      # The three Python manifests are still asserted absent, unchanged: every user-path script
+      # is Python 3 standard library and there is nothing for them to declare.
+      - name: Zero runtime dependencies, and the one build-time dependency is a pinned YAML parser
+        run: |
+          set -euo pipefail
+          for f in requirements.txt Pipfile pyproject.toml; do
+            if [ -e "$f" ]; then
+              echo "::error::$f exists. Every user-path script is Python 3 standard library and declares nothing"
+              exit 1
+            fi
+          done
+          if [ ! -e package.json ]; then
+            echo "::error::package.json does not exist. This repository ships a build and must declare it"
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json, re, sys
+          fail = []
+          try:
+              pkg = json.loads(open("package.json", encoding="utf-8").read())
+          except Exception as e:
+              print(f"::error::package.json does not parse: {e}")
+              sys.exit(1)
+
+          for key in ("dependencies", "peerDependencies", "optionalDependencies"):
+              got = pkg.get(key) or {}
+              print(f"{key}: {len(got)} entr(ies)")
+              if got:
+                  fail.append(f"{key} is non-empty ({', '.join(sorted(got))}): zero runtime dependencies, RAIL 11")
+
+          dev = pkg.get("devDependencies") or {}
+          print(f"devDependencies: {len(dev)} entr(ies) -> {', '.join(sorted(dev)) or '(none)'}")
+          EXACT = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
+          for name, spec in sorted(dev.items()):
+              # Positive allowlist by property, not a hardcoded package name: the ONLY thing this
+              # build needs that no standard library provides is a YAML parser.
+              if "yaml" not in name.lower():
+                  fail.append(f"devDependency '{name}' is not a YAML parser. The build-time parser is the only permitted dependency")
+              if not EXACT.match(str(spec)):
+                  fail.append(f"devDependency '{name}' is '{spec}', which is a range, not a pin")
+
+          for f in fail:
+              print(f"::error::{f}")
+          sys.exit(1 if fail else 0)
+          PY

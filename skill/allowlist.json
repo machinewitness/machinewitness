@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "what_this_is": "The exhaustive POSITIVE declaration of every capability this skill has on a user path: the commands, the child processes, the outbound endpoints (none), the things it reads, the things it writes, and the external tools it invokes. A capability that is not declared here is a defect, not an oversight.",
+  "why_positive_and_not_a_word_ban": "A ban on the words track / monitor / watch / surveil cannot establish that the capability is absent, because those words necessarily appear in the doctrine, the tests and the fixtures that forbid them, so the ban needs exemptions for exactly the files most likely to describe the capability, and then proves nothing. An enumeration is falsifiable instead: extract every child process, socket and open-for-write out of the code, diff it against this file, and fail on anything undeclared. Vocabulary survives separately, as a copy check over human-facing strings, with its exclusions stated.",
+  "how_it_is_enforced": "tests/rails/allowlist.test.mjs. It extracts capability sites statically, diffs both ways, and fails on an undeclared site AND on a declared entry with no site behind it, the second because an allowlist that grows to describe capabilities the code does not have is a rubber stamp forming.",
+  "changing_this_file": "Every entry carries a reason, so no entry can be added without one appearing in the diff. Adding an endpoint is not an allowlist edit: it is a change of architecture, and it needs a row in RAIL_MATRIX.md before it needs a line here.",
+
+  "scanned_roots": [
+    { "path": "skill/scripts", "reason": "every user-path script. Python 3 standard library only" },
+    { "path": "cli", "reason": "the command-line entry point. It now exists (one launcher, cli/bin/mw.js) and it is scanned here and driven for real in the network-denied sandbox, in the same flow as every shipped tree. It is written in the build tool's language and that is the ONE place that is permitted, because it does no work: it resolves a declared command to one of the scripts above, starts it, and passes the exit code back unchanged. Nothing that touches a person's own files is anything but Python 3 standard library" }
+  ],
+
+  "out_of_scope": [
+    { "path": "scripts/build.mjs", "reason": "build tool. Runs in a checkout, never for a person under accusation. Node is a build dependency and no user path may require it" },
+    { "path": "ops/", "reason": "maintainer gates. Run by a contributor or by continuous integration against a checkout" },
+    { "path": ".github/", "reason": "continuous integration. Runs on a forge, never on anybody's machine" },
+    { "path": "tests/", "reason": "the tests themselves spawn processes and write to temporary directories, which is what makes them tests. Including them would make the extractor's own scaffolding the thing it reports" },
+    { "path": ".claude/ .codex/ plugin/", "reason": "generated copies of skill/. Byte-identical, locked by digest, and the offline check drives the flow inside each of them so they are verified by execution rather than by re-reading the same bytes" }
+  ],
+
+  "commands": [
+    { "name": "init", "path_class": "user", "runs": "skill/scripts/triage.py", "reference": "skill/reference/init.md", "reason": "the one human surface. Relays the engine" },
+    { "name": "hazard", "path_class": "user", "runs": "skill/scripts/triage.py", "reference": "skill/reference/hazard.md", "reason": "the gate that runs before any advice about records" },
+    { "name": "triage", "path_class": "user", "runs": "skill/scripts/triage.py", "reference": "skill/reference/triage.md", "reason": "the clock and the record questions, then the derived plan" },
+    { "name": "clock", "path_class": "user", "runs": "none. Reads the contract and reports", "reference": "skill/reference/clock.md", "reason": "what is running out, in what order" },
+    { "name": "layers", "path_class": "user", "runs": "skill/scripts/triage.py", "reference": "skill/reference/layers.md", "reason": "re-read the record questions and the fence on each. ⚠️ THIS SAID `none. Reads the contract and reports`, AND IT WAS WRONG. Its reference document forbids walking the questions from the document (*the engine owns the questions, this file is a map for you*) and gives the two engine invocations, exactly as init and hazard do; the table of node ids in it exists so a relay can tell where the engine is, not so anybody can read the questions out of it. The launcher reads THIS field to build its dispatch, so the stale value made `mw layers` answer that the command has no program of its own, about the one command that walks the record questions. A declaration that under-states is worse than a missing one, because it is the thing a reviewer trusts. Now compared against what the reference actually invokes, by a test" },
+    { "name": "capture-audit", "path_class": "user", "runs": "skill/scripts/capture_audit.py", "reference": "skill/reference/capture-audit.md", "reason": "what the act of reading a source writes. A precondition, not advice, and the same file holds the preflight, which both commands that read now import and call before their first read, so the permission is a gate rather than a phrase" },
+    { "name": "freeze", "path_class": "user", "runs": "skill/scripts/freeze.py", "reference": "skill/reference/freeze.md", "reason": "seal a source the person is entitled to, without altering it. It imports the preflight and calls it before its first listing and before it creates anything in their folder" },
+    { "name": "verify", "path_class": "user", "runs": "skill/scripts/verify.py", "reference": "skill/reference/verify.md", "reason": "re-check a sealed set and count three outcomes separately. It imports the preflight and calls it before it works out which sets exist, because working that out is already a read. ⛔ It has no write capability at all (no entry below names it) because a checker that can alter what it checks is a checker that can be blamed for a change" },
+    { "name": "limits", "path_class": "user", "runs": "none. Reads doctrine and reports", "reference": "skill/reference/limits.md", "reason": "what the result cannot establish, said unprompted" },
+    { "name": "jurisdiction", "path_class": "user", "runs": "none. Reads a pack and reports", "reference": "skill/reference/jurisdiction.md", "reason": "review state and every unanswered question. Never an answer" },
+    { "name": "gate", "path_class": "contributor", "runs": "ops/casefact_gate.sh, ops/ci_casefact.sh, ops/check_contracts.py", "reference": "skill/reference/gate.md", "reason": "repository and publication inputs only. Never a package going to counsel" }
+  ],
+
+  "subprocesses": [
+    {
+      "call": "subprocess.run",
+      "in": "skill/scripts/triage.py",
+      "invokes": "mount",
+      "binaries": ["mount"],
+      "argv_shape": "a single absolute path, no arguments, standard input closed, output captured, bounded by a timeout",
+      "reaches_third_party": false,
+      "network": false,
+      "reason": "asks this machine what its own volumes are, so the engine can refuse to put somebody's records on a volume that leaves the machine or that a program serves rather than a disk. There is no library call for it on this platform, and the check fails closed when the list cannot be read"
+    },
+    {
+      "call": "shutil.which",
+      "in": "skill/scripts/triage.py",
+      "invokes": "nothing. Resolves a name against the search path",
+      "binaries": [],
+      "argv_shape": "n/a",
+      "reaches_third_party": false,
+      "network": false,
+      "reason": "fallback lookup for the same volume-list tool when it is not at its usual absolute path. Declared as a child-process capability because resolving a name off the search path is how an unexpected binary gets run"
+    },
+    {
+      "call": "child_process",
+      "in": "cli/bin/mw.js",
+      "invokes": "nothing on its own. It is the import that provides the one call below",
+      "binaries": [],
+      "argv_shape": "n/a",
+      "reaches_third_party": false,
+      "network": false,
+      "reason": "declared separately from the call because the extractor sees the import as its own capability site, and it is right to: an import of the process-starting module is the thing that makes the capability reachable at all. Listing only the call would leave a site undeclared and the diff would fail, correctly"
+    },
+    {
+      "call": "spawnSync",
+      "in": "cli/bin/mw.js",
+      "invokes": "python3",
+      "binaries": ["python3"],
+      "argv_shape": "the interpreter by name off the search path, then one absolute path to one of the scripts declared above, then the person's own arguments passed through unchanged. Standard input, output and error are the terminal's own; nothing is captured, rewritten or re-ordered",
+      "reaches_third_party": false,
+      "network": false,
+      "reason": "the whole of what the command-line launcher does. It is the one place the build tool's language starts anything, and it starts only the interpreter that runs the scripts above, which command maps to which script is read out of this file rather than written in the launcher, so a launcher cannot name a command this project does not have. The exit code comes back unchanged, because a refusal that arrived at a terminal as a zero would be a gate turned into a phrase. ⚠️ It also switches OFF the interpreter's habit of caching compiled copies of the scripts beside them: that is a write into the install tree caused by nothing but having run, no entry below covers it, and a person's machine should look the same after a run as it did before"
+    }
+  ],
+
+  "network": {
+    "outbound_allowed": false,
+    "endpoints": [],
+    "hostnames": [],
+    "sockets": [],
+    "reason": "There are none, and there is no code path that could acquire one. Nothing is uploaded, nothing is fetched, there is no version check, no update check, no beacon, no crash report and no usage data, not anonymised and not opt-in. This is verified by running the whole flow with the network denied at the operating system, not by reading the source and finding no import.",
+    "if_this_ever_changes": "It is a change of architecture. It needs a row in RAIL_MATRIX.md and a decision record before it needs a line here."
+  },
+
+  "data_sources": [
+    { "id": "contract", "path": "skill/data/tree.json", "root": "install", "owner": "the install", "third_party": false, "read_by": "engine, and freeze and verify by way of the preflight", "reason": "the flow itself. Verified against its digest before it is used, and the engine refuses to start on a mismatch. Freeze and verify reach it too, indirectly: the preflight they call before their first read binds a permission to the contract this install actually holds, and it asks the engine for that digest rather than keeping a second answer of its own" },
+    { "id": "contract_digest", "path": "skill/data/tree.sha256", "root": "install", "owner": "the install", "third_party": false, "read_by": "engine, and freeze and verify by way of the preflight", "reason": "the digest the contract is checked against. Read on the same indirect path as the contract itself, for the same reason" },
+    { "id": "own_source", "path": "skill/scripts/triage.py", "root": "install", "owner": "the install", "third_party": false, "read_by": "engine", "reason": "the engine reads its own text during its self-check, to prove no build placeholder survived into a shipped copy" },
+    { "id": "this_declaration", "path": "skill/allowlist.json", "root": "install", "owner": "the install", "third_party": false, "read_by": "the command-line launcher", "reason": "the launcher reads THIS file (the commands block of it) to work out which command runs which script. Read only, resolved relative to the launcher itself, and refused rather than guessed at when it is missing, empty, unreadable or lists no command. The alternative was a table of the same mapping typed into the launcher, which is a second copy of a fact this project has already shipped twice and watched drift both times" },
+    { "id": "working_note", "path": "<the folder the person is standing in>/.mw-state.json", "root": "cwd", "owner": "the person", "third_party": false, "read_by": "engine", "reason": "where the session is kept before the person has chosen a folder. Moved into their folder as soon as they confirm one, and removed from where it was" },
+    { "id": "session", "path": "<their folder>/.mw-state.json", "root": "workspace", "owner": "the person", "third_party": false, "read_by": "engine, and freeze and verify by way of the preflight", "reason": "their answers, so a long flow survives being interrupted. Being interrupted is the expected case. The preflight reads it for one narrow purpose as well: to establish that this folder is one of ours and which contract was being walked in it, which is what catches a permission carried in from another matter" },
+    { "id": "volume_list_linux", "path": "/proc/self/mountinfo, /proc/mounts", "root": "machine", "owner": "this machine", "third_party": false, "read_by": "engine", "reason": "what this machine's volumes are. Used only to refuse an unsafe folder, and an empty reading is a refusal rather than an assumption of safety" },
+    { "id": "volume_list_darwin", "path": "standard output of the volume-list tool", "root": "machine", "owner": "this machine", "third_party": false, "read_by": "engine", "reason": "the same question on a platform with no file to read it from" },
+    { "id": "folder_pointer", "path": "<home>/.machine-witness/workspaces", "root": "home", "owner": "the person", "third_party": false, "read_by": "engine", "reason": "the list of folders written down so a later session can offer them instead of saying it has lost everything. Absent unless the contract's device-exposure question was answered without setting device_exposed. ADR 0010" },
+    { "id": "pack", "path": "jurisdictions/<code>/pack.yaml, jurisdictions/<code>/00_status.md", "root": "install", "owner": "the install", "third_party": false, "read_by": "agent", "reason": "read to report review state and every unanswered question. Never to answer one" },
+    { "id": "doctrine", "path": "HONEST_LIMITS.md, docs/methods/", "root": "install", "owner": "the install", "third_party": false, "read_by": "agent", "reason": "what the result cannot establish, so it can be said unprompted rather than remembered" },
+    { "id": "what_was_checked_before_reading", "path": "<their folder>/what-was-frozen/checked-before-reading.json", "root": "workspace", "owner": "the person", "third_party": false, "read_by": "the preflight, which freeze and verify each call before their first read", "reason": "the permission itself: what was checked before anything was read, bound to one source, one job, one folder, one contract and a recent moment. Refused when absent, damaged, stale, or made for something else. Both commands that read import the preflight and call it. They do not shell out to it, because a child process is a capability that has to be declared and an in-process call cannot be forgotten between two lines of code. ⛔ It is never the source: nothing in that check opens the thing it is asked about, because a fingerprint of the content would be the very read it runs in front of" },
+    { "id": "the_source_they_name", "path": "<the file or folder the person points at>", "root": "machine", "owner": "the person", "third_party": false, "read_by": "freeze", "reason": "the one thing on this machine that freeze reads, named by the person on the command line, opened read-only and never written to. A symbolic link is never followed, because following one reads something outside what they pointed at and that may not be theirs to hand anybody; anything that is not a plain file is recorded from its listing and never opened, because some of them never finish being read" },
+    { "id": "the_copies_it_made", "path": "<their folder>/frozen-copies/<set>", "root": "workspace", "owner": "the person", "third_party": false, "read_by": "freeze and verify", "reason": "the copies are read back after they are written, by a second pass over separate file handles, so the digest of the copy is not produced by the thing that made it. Verify reads only these and the record beside them, and creates nothing" },
+    { "id": "the_record_beside_them", "path": "<their folder>/what-was-frozen/<set>.json, <set>.sha256", "root": "workspace", "owner": "the person", "third_party": false, "read_by": "verify", "reason": "what was frozen and what its digests were, so a later check compares against the profile recorded at the moment of freezing rather than against a demand that everything be green. A check that requires perfection is switched off in the first week; a check that requires the same answer as last time keeps working" }
+  ],
+
+  "no_source_belonging_to_anybody_else": "Every entry above is the install's own files, this machine's own facts about itself, or the person's own folder. There is no entry for another person's device, account, cloud, profile or message store, and there is no code path that could take one. No credential parameter exists on any command, and no command accepts a name, handle or account belonging to someone else. The command that stands in front of a read is built, and it is built so that it does NOT perform one: it binds a permission to the resolved path of a source and never opens it, because a look taken in order to identify something is the read it exists to precede. 🔴 AND IT IS NOW CALLED BY BOTH COMMANDS THAT READ, which is the half that was missing: freeze calls it before its first listing and before it creates anything in the person's folder, verify calls it before it works out which sets exist, and each refusal is relayed verbatim with the same exit code as the command's own. A precondition that exists in one file and is absent from its callers is a phrase, not a gate. ⚠️ And this version DOES read the person's own evidence: freeze opens one file or folder they point at, on this machine, read-only, and writes only inside the folder they confirmed. That is a change from the version before it, in which nothing read a source at all, and it is stated here rather than left to be noticed. The compensating controls are that the source is theirs by construction (no credential parameter exists to reach anything else), that a symbolic link out of it is never followed, that nothing which is not a plain file is ever opened, that the origin is listed before and after the read and the two listings compared, and that neither command reads a byte until the permission above is present, bound and fresh.",
+
+  "filesystem_writes": [
+    { "call": ".write_text", "in": "skill/scripts/triage.py", "root": "workspace", "paths": "MATTER.md, PLAN.md, closed-paths.md, .gitignore, .mw-state.json", "reason": "the person's own record of what they answered, what to do in what order, and which paths their conditions closed. Written readable by them alone" },
+    { "call": ".write_bytes", "in": "skill/scripts/triage.py", "root": "workspace", "paths": "what-to-do.pdf, and nothing else ever", "reason": "the printable checklist, so the list can be carried into a building where there is no computer. ⛔ BYTES because a PDF is bytes, which is the only reason this is a second write call rather than the text one above. Nothing is put on disk unless the whole document rendered: a half-written sheet is worse than none, and a failure to render is deliberately silent in the flow and a hard failure in the self-check, because everything on the sheet is also on the screen and in PLAN.md. No compression, so the person can read every word of it in a text editor without a tool" },
+    { "call": ".mkdir", "in": "skill/scripts/triage.py", "root": "workspace", "paths": "their folder, the two folders named in the engine's own workspace-folder constant, and one folder inside the first of those per record the person said yes to", "reason": "the folder the person confirmed, the two subfolders a later version writes sealed copies into, and the destinations the plan tells them to put each export in. ⛔ The parent names are never a string written anywhere but that constant; the per-record names come from the contract's own layer values through one table, which the self-check requires to be exhaustive over the contract" },
+    { "call": "os.chmod", "in": "skill/scripts/triage.py", "root": "workspace", "paths": "everything it creates", "reason": "owner-only on every folder and file it makes. Best effort: a filesystem that cannot hold the mode is not a reason to stop, and the screen says plainly that a backup tool or a search index on this machine may still reach it" },
+    { "call": ".unlink", "in": "skill/scripts/triage.py", "root": "cwd", "paths": "the working note, and nothing else ever", "reason": "the session kept before the folder existed is removed after its contents have been written into the folder. It parses the file and requires this engine's own schema key first, so a file that is not one of ours is left exactly where it is. Leaving it would put a second copy of their answers outside the only folder they were told about, and it would win every later attempt to resume" },
+    { "call": "open(w)", "in": "skill/scripts/triage.py", "root": "null_device", "paths": "the platform's null device", "reason": "the engine's self-check drives the whole flow and must not print thousands of lines of screens while doing it. Declared rather than excused: an open-for-write is an open-for-write, and a reader of this file should be able to see every one" },
+    { "call": "tempfile.mkdtemp", "in": "skill/scripts/triage.py", "root": "temp", "paths": "a fresh temporary directory", "reason": "the self-check builds a throwaway install tree and a throwaway folder so it can test refusals for real rather than by inspection. Removed at the end" },
+    { "call": "shutil.copy2", "in": "skill/scripts/triage.py", "root": "temp", "paths": "the contract, into that throwaway tree", "reason": "so the self-check can corrupt a copy of the contract and prove the engine refuses to run on it" },
+    { "call": "shutil.rmtree", "in": "skill/scripts/triage.py", "root": "temp", "paths": "the throwaway tree it made itself", "reason": "cleanup of its own temporary directory. Never anything it did not create" },
+    { "call": ".write_text", "in": "skill/scripts/capture_audit.py", "root": "workspace", "paths": "what-was-frozen/checked-before-reading.json, and nothing else ever", "reason": "the permission, written into the folder the engine already made for it. Written whole rather than appended to, so an interrupted write fails the shape check on the next run. A truncated permission refuses instead of half-permitting. ⛔ It creates no folder: a workspace that is not set up is a refusal, not something to fix in place" },
+    { "call": "os.chmod", "in": "skill/scripts/capture_audit.py", "root": "workspace", "paths": "the one file above", "reason": "owner-only on the permission it writes, because that file names a path on the person's own machine and sits on a device that may be examined. Best effort, exactly as the engine treats it: a filesystem that cannot hold the mode is not a reason to stop, and it is claimed as a protection nowhere" },
+    { "call": "open(w)", "in": "skill/scripts/freeze.py", "root": "workspace", "paths": "frozen-copies/<set>/… , what-was-frozen/<set>.json, <set>.txt, <set>.sha256", "reason": "the copies themselves and the three files that record them. A plain byte-for-byte copy rather than a convenience helper, because the helpers carry permissions, resource forks and extended attributes across on some platforms and synthesise companion files on others. Either of which changes what is being digested or how many files exist. ⛔ Every write goes through a path assertion in code first, never a permission bit" },
+    { "call": ".mkdir", "in": "skill/scripts/freeze.py", "root": "workspace", "paths": "the two folders named in the engine's own workspace-folder constant, one folder per set inside the first of them, and the folder structure of the source mirrored inside that", "reason": "where the copies go. ⛔ It never creates the person's case folder itself: choosing where case files live is a screen with a warning and a confirmation on it, and a command that quietly made one would put case material somewhere nobody agreed to. Never named by a string written anywhere but that constant" },
+    { "call": "os.chmod", "in": "skill/scripts/freeze.py", "root": "workspace", "paths": "every folder and file it creates", "reason": "owner-only on the folders, and read-only on every copy and every record file, so an accidental edit to a frozen set needs a deliberate act first. Best effort, exactly as the engine treats it: a filesystem that cannot hold the mode is not a reason to stop, and it is claimed as a protection nowhere" }
+  ],
+
+  "writes_outside_the_workspace": [
+    {
+      "path": "<home>/.machine-witness/workspaces",
+      "requires": "the contract's device-exposure question having been answered without setting device_exposed, in that session, and the person being told on screen that the file exists",
+      "default": "off, and it stays off on anything short of that answer",
+      "reason": "DECLARED RATHER THAN CLAIMED AWAY. Writes outside the workspace are meant to be none, and this is the one, so it is listed here rather than folded into the list above. A file listing somebody's case folders is itself a record on a device that may be examined, so what decides whether it exists is whether a device of theirs may be looked at. The contract asks that in phase 0, long before the folder exists, and unsure counts as exposed. It used to require the person to answer yes on a screen stating the cost, which asked somebody four minutes into the tool to weigh a forensic trade-off, and whose default outcome was a session that could not find its own folder. The screen survives and says what was done; it no longer asks. ADR 0010."
+    },
+    {
+      "path": "the platform's temporary directory, and the platform's null device",
+      "requires": "nothing, but only the self-check reaches them",
+      "default": "not touched on any user path",
+      "reason": "the self-check is a maintainer surface. It is listed because an honest enumeration has no category called too boring to mention"
+    }
+  ],
+
+  "external_tools": [
+    { "tool": "the platform's volume-list tool", "path_class": "user", "invoked_by": "skill/scripts/triage.py", "reason": "the only external program any user path runs. One absolute path, no arguments, no network, and a failure is a refusal rather than an assumption" },
+    { "tool": "python3", "path_class": "user", "invoked_by": "the agent, as the interpreter, and by the command-line launcher, as a child process", "reason": "standard library only, offline, no install step. On the agent path it is the interpreter and not a child process, and the skill's tool permission names it and nothing else. On the terminal path the launcher starts it, which is why it appears in the child-process block above as well: the same tool reached two ways, declared twice rather than once, because one of the two really is a process being started. ⛔ Its absence is a refusal in plain words with a route out of it, never a stack trace, the most likely real failure on a stranger's machine is that Python 3 is not installed" },
+    { "tool": "the copy command already documented in jurisdictions/README.md", "path_class": "contributor", "invoked_by": "jurisdiction --scaffold", "reason": "copies the pack template into a new pack directory. A contributor action against a checkout, never something a person under accusation runs" },
+    { "tool": "git, grep, sed, node", "path_class": "contributor", "invoked_by": "ops/ and scripts/build.mjs", "reason": "the gates and the build. Out of the extractor's scope by declaration above, and stated here so the list is not silently shorter than the truth" },
+    { "tool": "the session's interactive question tool, where the harness provides one", "path_class": "user", "invoked_by": "the agent, to show the engine's own question and the engine's own option list as a choice rather than as a line to transcribe", "reason": "⛔ IT CARRIES NOTHING OUT. It renders a question the engine has already printed and returns which option was picked: nothing is read from disk, nothing is written, nothing leaves the machine that was not already on the screen. It is declared because a mistyped answer arrives as a refusal in front of somebody who has been accused of something, and they read it as the tool turning them away. ⛔ The option list is the contract's and passes through unchanged, and where a node offers more options than the tool can display the engine's text screen is relayed instead, never a trimmed or grouped list. A session without such a tool loses nothing, which is why the terminal screen stays complete on its own" }
+  ],
+
+  "credential_parameters": [],
+  "credential_parameters_reason": "There are none, on any command, and there is nowhere for one to go: every source above belongs to the person, to this machine, or to the install. A command that took a password, a token, an API key or a cookie would be a command reaching something the person does not own.",
+
+  "what_this_file_cannot_establish": "Static extraction sees the shapes it was taught. A capability reached by building a name at run time and looking it up (importing by string, resolving an attribute off a module, evaluating text) would not appear as a declared shape, so any of those forms is a hard failure in the scanned roots rather than something this file can declare, because a declaration for it could not be checked. Beyond that, the compensating control is behavioural rather than textual: the whole flow is executed with the network denied and every write recorded, and what it actually did is compared with this file."
+}

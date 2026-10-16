@@ -1,0 +1,572 @@
+{
+  "meta": {
+    "version": 0,
+    "status": "draft",
+    "produces": "preservation_plan",
+    "requires_account": false,
+    "transmits_answers": false,
+    "works_offline": true,
+    "jurisdiction": {
+      "assumed": "ca",
+      "reviewed": false,
+      "pack_available": false,
+      "wording_sites": [
+        "H0",
+        "H1",
+        "H2",
+        "X3",
+        "H5"
+      ]
+    }
+  },
+  "phase_0_hazard": [
+    {
+      "id": "H0",
+      "ask": "Where are you up to? Has anything formal happened yet?",
+      "options": [
+        "nothing formal yet",
+        "spoken to but not arrested",
+        "arrested or charged",
+        "unsure"
+      ],
+      "sets": "stage",
+      "pack_supplied": [
+        "stage_names"
+      ],
+      "note_to_user": "Whatever you say here, everything below still applies. This only tells us which words will make sense to you.",
+      "next": "H1"
+    },
+    {
+      "id": "H1",
+      "ask": "Are you under any court order, release or bail condition, undertaking, protection or restraining order, or a workplace directive?",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "pack_supplied": [
+        "order_types"
+      ],
+      "branch": {
+        "yes": {
+          "next": "H2"
+        },
+        "unsure": {
+          "next": "H2",
+          "set": {
+            "conditions_assumed": true
+          }
+        },
+        "no": {
+          "next": "H3"
+        }
+      }
+    },
+    {
+      "id": "H2",
+      "ask": "Does it include no-contact, non-association, or stay-away conditions?",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "pack_supplied": [
+        "condition_types"
+      ],
+      "note_to_user": "We are not interpreting your conditions. Only your lawyer can. This just tells us which options to leave out.",
+      "branch": {
+        "yes": {
+          "next": "H3",
+          "set": {
+            "no_contact": true
+          }
+        },
+        "unsure": {
+          "next": "H3",
+          "set": {
+            "no_contact": true
+          }
+        },
+        "no": {
+          "next": "H3"
+        }
+      }
+    },
+    {
+      "id": "H3",
+      "type": "hard_exclusions",
+      "items": [
+        {
+          "id": "X1",
+          "text": "Do not contact the other person. Any channel, any intermediary, no exceptions — including replying to them, and including through a friend or family member."
+        },
+        {
+          "id": "X2",
+          "text": "Do not look at their accounts, profiles, or posts. Viewing can notify them, and some platforms add you to a conversation just for opening it.",
+          "why": "One of the most common ways people breach a condition without meaning to."
+        },
+        {
+          "id": "X3",
+          "text": "Do not delete OR CANCEL anything — not a message, photo, app, booking, subscription, or calendar entry. Not even one that embarrasses you. Not even one you never created and never wanted.",
+          "why": "Deleting looks like consciousness of guilt and can be a separate offence. Cancelling is worse than useless: it often NOTIFIES the other side and can remove you from a channel in a way they see. Preserve, don't purge.",
+          "pack_supplied": [
+            "breach_consequence_note"
+          ]
+        },
+        {
+          "id": "X4",
+          "text": "Read your e-mail normally. But do not CLICK a link in any message about this, and do not open or extract an attachment from one.",
+          "why": "Reading is fine. A link is not: it often carries a code unique to you, so following it writes a dated entry, TODAY, into the very record your lawyer is about to ask for. Save the whole message as a file and let them open it. If you need to know where a link goes, tell your lawyer rather than finding out.\n"
+        },
+        {
+          "id": "X5",
+          "text": "Do not create a second or anonymous account to look at anything."
+        },
+        {
+          "id": "X6",
+          "text": "Do not explain yourself to police, an investigator, HR, or the other person's friends. Not to clear it up, not informally, not at your own door.",
+          "why": "Anything you say becomes a fixed account you are held to later — before you or your lawyer know what is actually alleged. You carry no burden to prove where you were."
+        },
+        {
+          "id": "X7",
+          "text": "Do not go anywhere you know the other person to be — including places you only recently learned they go, and including a TYPE of place or area they are known to use, not just a specific address.\n",
+          "why": "Being accused teaches you things you must now avoid, and you cannot un-learn them. The condition can bite on knowledge you only acquired because of the accusation."
+        },
+        {
+          "id": "X8",
+          "text": "Do not try to tidy up or fix a shared group, album, folder, or subscription you are both in.",
+          "why": "Leaving, un-sharing, removing yourself and cancelling all NOTIFY. Trying to fix a hazard is usually a fresh, dated, attributable hazard. Tell your lawyer instead; leave it exactly as it is."
+        },
+        {
+          "id": "X9",
+          "text": "Before signing up, booking, joining, or registering for anything at all, stop and check it against your conditions.",
+          "why": "One tap can put your name on a list, add you to a chat, or place you somewhere. This is the single most common way an ordinary day becomes an allegation."
+        },
+        {
+          "id": "X10",
+          "text": "Do not consent to anyone searching or taking your phone or computer. Say you want your lawyer.",
+          "why": "Consent replaces the safeguards that would otherwise apply, and it cannot be withdrawn once the data is taken."
+        },
+        {
+          "id": "X11",
+          "text": "Do not ask anyone what they remember, and do not ask anyone to write anything down for you.",
+          "why": "It can be characterised as coaching or interference, and it contaminates the very recollection you were hoping to preserve. Give your lawyer the names; they take the statements."
+        },
+        {
+          "id": "X12",
+          "text": "If the other person contacts YOU, that is not your breach — but replying, even once, even to say stop, can be.",
+          "why": "Do not respond. Do not block-and-delete either: preserve it exactly as received and tell your lawyer the same day."
+        },
+        {
+          "id": "X13",
+          "text": "Write down what you remember ONCE, as soon as possible, and then never improve it.",
+          "why": "A note that gets tidied, expanded or corrected later is worth far less than a rough one written immediately — and the edits themselves become a problem."
+        },
+        {
+          "id": "X14",
+          "text": "If an allegation is dropped, withdrawn, or 'sorted out', change nothing. Keep every condition and keep every record.",
+          "why": "Nothing is over until your lawyer tells you it is over, in writing."
+        }
+      ],
+      "next": "H5"
+    },
+    {
+      "id": "H5",
+      "ask": "Has anyone asked to look at your phone or computer, taken one, or shown you a warrant for one?",
+      "options": [
+        "no",
+        "asked but I refused",
+        "yes, they have one or took one",
+        "yes, I let them look",
+        "unsure"
+      ],
+      "pack_supplied": [
+        "device_search_authority"
+      ],
+      "note_to_user": "We are not interpreting anything and this changes nothing about your conditions. It only decides where this tool puts files and what it refuses to write down.",
+      "branch": {
+        "no": {
+          "next": "H4"
+        },
+        "asked but I refused": {
+          "next": "H4"
+        },
+        "yes, they have one or took one": {
+          "next": "H4",
+          "set": {
+            "device_exposed": true
+          }
+        },
+        "yes, I let them look": {
+          "next": "H4",
+          "set": {
+            "device_exposed": true
+          }
+        },
+        "unsure": {
+          "next": "H4",
+          "set": {
+            "device_exposed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "H4",
+      "ask": "Do you have a lawyer yet?",
+      "options": [
+        "yes",
+        "no",
+        "in progress"
+      ],
+      "branch": {
+        "no": {
+          "next": "O1",
+          "set": {
+            "counsel": false,
+            "plan_mode": "preservation_only"
+          }
+        },
+        "in progress": {
+          "next": "O1",
+          "set": {
+            "counsel": false,
+            "plan_mode": "preservation_only"
+          }
+        },
+        "yes": {
+          "next": "O1",
+          "set": {
+            "counsel": true,
+            "plan_mode": "full"
+          }
+        }
+      }
+    }
+  ],
+  "phase_0c_positive_obligations": [
+    {
+      "id": "O1",
+      "ask": "Does anything you have been given require you to DO something — report, notify a change, surrender an item, attend somewhere, keep in touch with someone?",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "note_to_user": "Not doing a required thing counts the same as doing a forbidden thing. We are not interpreting your paperwork — only your lawyer can.",
+      "branch": {
+        "yes": {
+          "next": "O2"
+        },
+        "unsure": {
+          "next": "O2",
+          "set": {
+            "obligations_assumed": true
+          }
+        },
+        "no": {
+          "next": "O5"
+        }
+      }
+    },
+    {
+      "id": "O2",
+      "ask": "Are any of them on a deadline or a schedule?",
+      "options": [
+        "yes",
+        "no",
+        "unsure"
+      ],
+      "sets": "has_scheduled_obligation",
+      "next": "O3"
+    },
+    {
+      "id": "O3",
+      "type": "guidance",
+      "text": "Put every required act and its date somewhere you cannot miss it, and tell your lawyer about each one. A missed date is the easiest breach there is.",
+      "next": "O4"
+    },
+    {
+      "id": "O4",
+      "type": "guidance",
+      "title": "Keep a proof ledger",
+      "text": "For every required act, keep proof you did it — a receipt, a confirmation, a sent message, a photograph, a note of who you spoke to and when. Also record every FAILED ATTEMPT: if you tried to comply and could not, that attempt is evidence and it disappears if you do not write it down the same day.\n",
+      "next": "O5"
+    },
+    {
+      "id": "O5",
+      "type": "guidance",
+      "text": "If you are unsure whether something is required of you, ask your lawyer before the date passes — not after.",
+      "next": "T1"
+    }
+  ],
+  "phase_1_clock": [
+    {
+      "id": "T1",
+      "ask": "Roughly when did the event you are being accused about happen?",
+      "options": [
+        "today",
+        "1-3 days ago",
+        "4-14 days ago",
+        "15-30 days ago",
+        "1-6 months ago",
+        "more than 6 months ago"
+      ],
+      "sets": "incident_age",
+      "drives": [
+        "countdown",
+        "action_order"
+      ]
+    },
+    {
+      "id": "T2",
+      "ask": "Is there a specific window in dispute — a date, and roughly which hours?",
+      "options": [
+        "yes",
+        "no",
+        "not known yet"
+      ],
+      "branch": {
+        "not known yet": {
+          "set": {
+            "widen_requests": true
+          }
+        },
+        "no": {
+          "set": {
+            "widen_requests": true
+          }
+        }
+      },
+      "note": "Widening every third-party request by a day either side is the default regardless. methods/03"
+    }
+  ],
+  "phase_2_layers": [
+    {
+      "id": "L1",
+      "ask": "Were you wearing a smartwatch, fitness band, or smart ring during that time?",
+      "layer": "wearable_telemetry",
+      "density": "highest",
+      "clock": "MONTHS",
+      "double_edged": true,
+      "limits": [
+        "device_not_person",
+        "off_body_is_silence",
+        "resolution_gaps"
+      ],
+      "action": "export_own_account_data"
+    },
+    {
+      "id": "L2",
+      "ask": "Did you have your phone with you?",
+      "layer": "os_usage_log",
+      "density": "high",
+      "clock": "DAYS",
+      "limits": [
+        "device_not_person",
+        "automated_events_look_like_activity"
+      ],
+      "action": "capture_device_now",
+      "priority_note": "Shortest clock of any device-local layer. Do this first.",
+      "branch": {
+        "yes": {
+          "next": "L2b"
+        },
+        "unsure": {
+          "next": "L2b"
+        },
+        "no": {
+          "next": "L3"
+        }
+      }
+    },
+    {
+      "id": "L2b",
+      "ask": "Is it an Android or an iPhone?",
+      "options": [
+        "android",
+        "iphone",
+        "both",
+        "unsure"
+      ],
+      "sets": "phone_platform",
+      "next": "L3"
+    },
+    {
+      "id": "L3",
+      "ask": "Did you use a laptop or desktop around that time?",
+      "layer": "computer_power_log",
+      "density": "medium",
+      "clock": "WEEKS",
+      "limits": [
+        "screen_on_only",
+        "device_not_person"
+      ],
+      "action": "capture_device_now"
+    },
+    {
+      "id": "L4",
+      "ask": "Were you messaging anyone about this, or with the other person?",
+      "layer": "chat_archive",
+      "density": "medium",
+      "clock": "STABLE",
+      "limits": [
+        "deletion_timing_unprovable",
+        "action_not_content_not_actor",
+        "block_visibility_asymmetric"
+      ],
+      "action": "export_full_thread_with_media",
+      "warning": "Export the whole thread. Selected screenshots are worth close to nothing. Do NOT open the thread if a no-contact condition applies — ask your lawyer first."
+    },
+    {
+      "id": "L5",
+      "ask": "Was any booking, registration, order, ride, or ticket involved?",
+      "layer": "platform_record",
+      "density": "medium",
+      "clock": "MONTHS",
+      "limits": [
+        "ui_label_is_not_a_field"
+      ],
+      "action": "keep_original_email_not_screenshot",
+      "method_ref": "methods/04"
+    },
+    {
+      "id": "L6",
+      "ask": "Were you in a building with door fobs or cameras — home, hotel, office, gym, or a venue?",
+      "layer": "premises_record",
+      "density": "high",
+      "clock": "DAYS",
+      "clock_flag": "RED",
+      "limits": [
+        "held_by_third_party",
+        "standing_required"
+      ],
+      "action": "preservation_demand",
+      "priority_note": "Most perishable layer that exists. If nothing else gets done today, do this.",
+      "method_ref": "methods/03"
+    },
+    {
+      "id": "L7",
+      "ask": "Did you use a card, bank account, or transit pass during that window?",
+      "layer": "financial_spine",
+      "density": "low",
+      "clock": "STABLE",
+      "limits": [
+        "coarse_timing"
+      ],
+      "action": "download_statements"
+    },
+    {
+      "id": "L8",
+      "ask": "Did you travel in or out around then?",
+      "layer": "travel_record",
+      "density": "low",
+      "clock": "STABLE",
+      "action": "collect_bookings_and_passes"
+    },
+    {
+      "id": "L9",
+      "ask": "Did you take any photos or videos around that time?",
+      "layer": "media_metadata",
+      "density": "medium",
+      "clock": "STABLE",
+      "limits": [
+        "originals_only_screenshots_destroy_metadata"
+      ],
+      "fence": "RAIL_6",
+      "action": "preserve_originals_do_not_screenshot"
+    },
+    {
+      "id": "L10",
+      "ask": "Are there any injuries on your own body?",
+      "layer": "independent_medical",
+      "density": "high",
+      "clock": "HOURS",
+      "clock_flag": "RED",
+      "limits": [
+        "does_not_decide_consent_claims"
+      ],
+      "action": "see_a_clinician_today",
+      "priority_note": "Injuries heal in days. This is a today task, and it is the only layer that expires from your own body."
+    },
+    {
+      "id": "L11",
+      "ask": "Did anyone see you, or were you with anyone?",
+      "layer": "witness_list",
+      "density": "medium",
+      "clock": "MONTHS",
+      "action": "write_names_for_counsel",
+      "warning": "Write the names down for your lawyer. Do NOT approach anyone yourself."
+    },
+    {
+      "id": "L12",
+      "ask": "Were you given any paperwork — a form, a notice, a printed sheet of conditions, a card?",
+      "layer": "paperwork_you_hold",
+      "density": "high",
+      "clock": "STABLE",
+      "limits": [
+        "held_by_you_only"
+      ],
+      "action": "keep_paperwork_you_were_given"
+    }
+  ],
+  "phase_3_output": {
+    "block_a": {
+      "id": "do_now",
+      "title": "Do these now, in this order",
+      "order_by": "clock",
+      "per_item": [
+        "what_to_do",
+        "rough_effort",
+        "needs_lawyer"
+      ]
+    },
+    "block_b": {
+      "id": "the_clock",
+      "title": "What is running out",
+      "per_record": [
+        "estimated_remaining",
+        "source_of_estimate",
+        "verify_with_holder"
+      ],
+      "flag_under_days": 14,
+      "disclaimer": "Typical only. Verify with the holder. Never stated as fact. RAIL 7"
+    },
+    "block_c": {
+      "id": "coverage",
+      "title": "How much this can help",
+      "counts": [
+        "independent_layers_covering_window",
+        "likely_silent",
+        "double_edged_flagged_for_counsel",
+        "closed_by_your_conditions"
+      ],
+      "forbidden": [
+        "strength",
+        "score",
+        "likelihood",
+        "percentage",
+        "prediction",
+        "case_assessment"
+      ],
+      "closing_text": "This tells you what to save. It does not tell you how strong anything is, and it cannot prove you did not do something. Nothing can.\n"
+    }
+  },
+  "never": [
+    "ask_for_detail_before_naming_who_receives_it",
+    "write_volunteered_detail_where_the_person_was_not_told_it_lands",
+    "store_or_transmit_answers",
+    "produce_strength_or_score",
+    "interpret_users_conditions",
+    "recommend_anything_touching_counterparty",
+    "suggest_deleting_or_cancelling_anything",
+    "offer_channel_cleanup_or_remediation",
+    "fetch_remote_content_when_rendering_captured_material",
+    "surface_any_location_habit_or_schedule_of_the_counterparty",
+    "auto_send_any_third_party_request",
+    "auto_label_consistent_or_in_tension",
+    "present_a_retention_period_as_fact",
+    "ask_the_user_to_gather_anyone_elses_recollection",
+    "imply_the_user_must_prove_absence"
+  ]
+}

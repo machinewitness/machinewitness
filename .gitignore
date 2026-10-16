@@ -1,0 +1,114 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. STAGING, material not yet scrubbed. Present on disk, never committed.
+#    A .gitignore protects git, not `cp -r`. Extraction copies, so verify by size:
+#    a tree far larger than its file listing means something came along.
+# ─────────────────────────────────────────────────────────────────────────────
+/staging/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. The real-value denylist must live OUTSIDE any repo. Belt and braces:
+#    the gate refuses to run if MW_DENYLIST points inside the tree.
+# ─────────────────────────────────────────────────────────────────────────────
+denylist.txt
+*denylist*.txt
+!DENYLIST.example.txt
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. Anything a person's own matter might arrive as. Nothing in this repository
+#    ever needs one of these, so an accidental copy is always a mistake.
+# ─────────────────────────────────────────────────────────────────────────────
+*.pdf
+*.epub
+*.eml
+*.mbox
+*.zip
+*.tar.gz
+*.sqlite
+*.sqlite3
+*.db
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. Machine and editor state. A real username survives in these constantly,
+#    and a path with a real username in it is an attribution leak.
+# ─────────────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+._*
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.vscode/
+.idea/
+*.swp
+*.log
+.env
+.env.*
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. Node is a BUILD tool only (ADR 0007 decision 10). Nothing here ships a
+#    dependency; the build-time YAML parser is a devDependency and its install
+#    tree is never committed.
+# ─────────────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. 🔴 CLAUDE.md AND .claude/ ARE TRACKED IN THIS REPOSITORY, deliberately, and
+#    this is a reversal of the rule the previous repository shape used.
+#
+#    There, both were workspace-local agent state and ignoring them was correct.
+#    Here, ADR 0007 makes them authored and generated PRODUCT:
+#      · CLAUDE.md is the instruction file an agent working ON this repo reads.
+#      · .claude/ and .codex/ are GENERATED provider trees. The freshness check
+#        rebuilds them and diffs against what is committed, so ignoring them
+#        would make that check compare a build against nothing, green on zero
+#        scanned bytes, which is this project's headline failure mode.
+#    ⚠️ .claude/ is generated. Hand-editing it fails the freshness check; edit
+#       skill/ and rebuild.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. ⚖️ The per-install jurisdiction note. WRITTEN BY THE ASSISTANT after `init`,
+#    never by the engine, and never committed. ADR 0008 decision 5, AGENTS.md §8.
+#
+#    It exists so a later session does not ask a frightened person to remember a
+#    two-letter code they were shown once. It is per-install by definition, so
+#    committing it would ship one person's answer to everybody who cloned this.
+#
+#    ⚠️ A .gitignore IS NOT A SECURITY BOUNDARY, and this one least of all. It
+#    does not stop a forced add, a parent repository, a backup tool, or a search
+#    index. That is exactly why the case folder's PATH is not allowed in this
+#    file: the opt-in pointer screen makes writing a path down a deliberate,
+#    off-by-default choice, and a note that recorded it anyway would defeat that
+#    screen quietly, which is worse than not having the note at all.
+# ─────────────────────────────────────────────────────────────────────────────
+.mw/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 8. 🔴 RUNTIME ARTIFACTS THAT LAND IN THE CURRENT DIRECTORY, and the reason they
+#    are listed here is a MISDIAGNOSIS rather than tidiness.
+#
+#    `.mw/` above is a DIRECTORY pattern and does not match a FILE. The engine
+#    writes `.mw-state.json` into the working directory before a workspace has
+#    been confirmed, so one run anywhere in this tree leaves it behind.
+#
+#    CI's generated-tree-fresh check requires `git status --porcelain` to be
+#    EMPTY. So a single stray engine run turns CI red while NAMING THE GENERATED
+#    TREE AS STALE, which is a true symptom pointing at a false cause. Anyone
+#    reading that would go and "fix" scripts/build.mjs, which is not broken, and
+#    the trap arrives precisely when someone is already editing it.
+#
+#    Same shape for the two evaluation artifacts: a skill-evaluation arc writes
+#    `evals/` inside the skill directory and a sibling `<name>-workspace/`, and
+#    evaluating this skill RUNS it, which writes the state file again.
+#
+#    ⚠️ As with section 7: not a security boundary. It stops an accident, not a
+#    forced add, and `.mw-state.json` is per-person state that must never ship.
+# ─────────────────────────────────────────────────────────────────────────────
+.mw-state.json
+evals/
+*-workspace/

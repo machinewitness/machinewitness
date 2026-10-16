@@ -1,0 +1,21 @@
+{
+  "name": "machine-witness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Preserve the digital record about your own life (your own devices, your own accounts, your own exports) before it is overwritten. One skill. Offline. Produces a record, never a verdict.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "mw": "cli/bin/mw.js"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "yaml": "2.9.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

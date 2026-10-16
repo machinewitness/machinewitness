@@ -1,0 +1,128 @@
+---
+# pack.yaml: the machine-readable half of a jurisdiction pack.
+#
+# A consumer reads this file to answer ONE question before anything else:
+# may this pack be used at all? If `review.state` is not `reviewed`, the consumer
+# must degrade to engine-only behaviour and say so on screen.
+#
+# Prose companion: the numbered markdown files beside this one. Fill both.
+#
+# INVARIANTS (enforced by consumers, not by comments):
+#   - a pack whose review.state != "reviewed" may not supply hazard wording to a user
+#   - an UNANSWERED field is never substituted, defaulted, or inferred by a consumer
+#   - no retention figure is presented as fact, only as `typical`, with its source  (RAIL 7)
+#   - no field states or implies an outcome                                        (RAIL 7)
+#   - no field cites a real matter: no charge combination, file number, or party    (RAIL 1)
+#
+# YAML 1.1 gotcha, same as tree.yaml: `yes`, `no` and `on` parse as booleans.
+# Quote them when you mean the string.
+
+meta:
+  jurisdiction: "<ISO 3166-1 alpha-2, lowercase>"    # e.g. ca
+  subdivision: null                                   # e.g. on. Null if the pack is national
+  name: "<jurisdiction name as a reader would say it>"
+  legal_system: "<common law | civil law | mixed | other>"
+  language: "<primary language of the authorities cited>"
+  version: 0
+
+review:
+  state: unreviewed          # unreviewed | partial | reviewed
+  reviewer_role: null        # ROLE ONLY: "criminal defence counsel, 10+ years". NEVER a name  (RAIL 1)
+  reviewed_scope: []         # list the file names actually read. Empty means none
+  unreviewed: [all]          # what is still open. `all` while state is unreviewed
+  supersedes: null           # version this replaces, if any
+
+# ---------------------------------------------------------------------------
+# CAPABILITY FLAGS, what a consumer may switch on for a user in this jurisdiction.
+# Every one defaults to a refusal. Absence of an answer is never permission.
+# ---------------------------------------------------------------------------
+capabilities:
+  hazard_wording_available: false      # 01: may the phase-0 gate use local wording
+  barred_reasoning_list_available: false   # 02. May the classifier gate run jurisdiction-aware
+  preservation_demand_binds: unknown   # "yes" | "no" | partial | unknown
+  demand_templates_available: false    # 03
+  retention_figures_sourced: false     # 04. False means show clocks as engine defaults, flagged
+  subject_access_route_available: false # 05
+  advertising_rules_reviewed: false    # 06: gates outward-facing copy in this jurisdiction
+  examiner_line_defined: false         # 07. Until true, own-device recovery routes to counsel
+
+# ---------------------------------------------------------------------------
+# 01: HAZARD WORDING.  SAFETY-CRITICAL. Feeds the phase-0 gate, which runs first.
+# The QUESTIONS come from tree.yaml and are not yours to change. Only the local
+# vocabulary is. See docs/triage/CLAUDE.md.
+# ---------------------------------------------------------------------------
+hazard_wording:
+  order_types: UNANSWERED        # local names for the instruments that restrict conduct
+  condition_types: UNANSWERED    # local names for no-contact / non-association / stay-away
+  breach_is_separate_offence: unknown   # "yes" | "no" | partial | unknown
+  breach_consequence_note: UNANSWERED   # what a breach means here, factually. NOT an outcome claim
+  positive_obligations_exist: unknown   # duties, not only prohibitions, tree.yaml phase_0c
+  workplace_directive_equivalent: UNANSWERED   # the HR / non-criminal analogue, if any
+
+# ---------------------------------------------------------------------------
+# 02: BARRED REASONING. Which lines of argument the law forbids here.
+# Describe the CLASS. Never write the argument out.  (RAIL 3, methods/06)
+# ---------------------------------------------------------------------------
+barred_reasoning:
+  regime_exists: unknown
+  authority: UNANSWERED          # public statute or reported authority. No real-matter citation
+  barred_classes: []             # class labels only, e.g. prior_conduct_to_consent
+  procedure_to_raise: UNANSWERED # if a barred line can be raised on application, say how
+  note: >
+    An empty list means UNKNOWN, never "nothing is barred". The engine's
+    default is to refuse to generate any of the classes in methods/06
+    regardless of what this pack says.
+
+# ---------------------------------------------------------------------------
+# 03, DEMANDS on third-party record holders.
+# ---------------------------------------------------------------------------
+demands:
+  routes: []                     # each: {name, who_may_send, binds: "yes"|"no"|partial, authority}
+  self_serve_possible: unknown   # can the person send one themselves, or counsel only
+  template_files: []             # paths within this pack
+  auto_send: false               # ALWAYS false. A request cannot be un-sent. tree.yaml `never`
+
+# ---------------------------------------------------------------------------
+# 04: RETENTION. Typical windows only. Every figure needs a source.  (RAIL 7)
+# ---------------------------------------------------------------------------
+retention:
+  disclaimer: "Typical only. Verify with the holder. Never stated as fact. RAIL 7"
+  entries: []                    # each: {layer, typical_window, source, region_varies, verified}
+  note: >
+    An entry with no `source` is a defect, not a draft. Delete it rather than
+    ship it, an unsourced figure reads as an assurance.
+
+# ---------------------------------------------------------------------------
+# 05, ENTITLEMENTS to the person's OWN data.  (RAIL 5)
+# ---------------------------------------------------------------------------
+entitlements:
+  data_protection_regime: UNANSWERED
+  subject_access_right: unknown
+  statutory_response_window: UNANSWERED    # in days/months as a duration, not a date
+  cost: UNANSWERED
+  disclosure_obligation_on_prosecution: UNANSWERED   # what arrives without any demand at all
+  privilege_treatment: UNANSWERED          # material prepared for counsel, underpins ADR 0001
+
+# ---------------------------------------------------------------------------
+# 06: ADVERTISING / CLAIMS rules for legal-adjacent services.  (RAIL 7)
+# Binds every outward-facing word shipped for this jurisdiction.
+# ---------------------------------------------------------------------------
+advertising:
+  regulator: UNANSWERED
+  outcome_claims_restricted: unknown
+  unauthorised_practice_boundary: UNANSWERED   # how far this may go before it is advice
+  banned_terms: []               # local additions to the project-wide ban
+  lawyer_reviewed: false         # legal/advertising_rules.md review step 3. Not a self-assessment
+
+# ---------------------------------------------------------------------------
+# 07: EXAMINER LINE. Where own-device work stops being a button.  (RAIL 5, RAIL 6)
+# ---------------------------------------------------------------------------
+examiner_line:
+  own_device_recovery_lawful: unknown
+  licensing_regime: UNANSWERED   # is forensic examination a licensed activity here
+  referral_wording: UNANSWERED   # what the product says instead of offering the capability
+  intimate_media_rule: >
+    RAIL 6 applies with no local override anywhere: freeze the container
+    unopened, route through counsel to a licensed examiner. No preview, no
+    thumbnail, no hash-of-content. This field exists to record the LOCAL
+    consequence of handling it, never an exception to the rail.

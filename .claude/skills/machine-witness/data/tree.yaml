@@ -1,0 +1,454 @@
+---
+# tree.yaml — THE CONTRACT.
+#
+# Consumed by both the interactive landing page and the offline app. Change this file,
+# never a copy. Prose companion: DECISION_TREE.md. Interactive rules: LANDING_CONTRACT.md.
+#
+# INVARIANTS (enforced by consumers, not by comments):
+#   - phase 0 (hazard) cannot be skipped or reordered
+#   - the questions in THIS file ask about record types and devices, never case detail. A
+#     consumer may ask for detail, and the person may volunteer it, once they have been told
+#     who receives it. The gate is the disclosure, not silence. ADR 0009
+#   - no answer is transmitted, logged, or persisted server-side
+#   - output is a preservation plan; never a strength, score, likelihood, or prediction
+#   - "unsure" is treated as "probably yes, go and check"
+#   - wording marked `pack_supplied` is local vocabulary, NOT part of the question. See meta.jurisdiction
+
+meta:
+  version: 0
+  status: draft
+  produces: preservation_plan     # never an assessment. RAIL 3
+  requires_account: false
+  transmits_answers: false
+  works_offline: true
+
+  # ⚖️ JURISDICTION. ADR 0005. Pack: ../../../jurisdictions/<code>/01_hazard_wording.md
+  #
+  # The QUESTIONS in this file are jurisdiction-neutral and are the contract — do not
+  # reword them (triage/CLAUDE.md, LANDING_CONTRACT.md §6). Some of the VOCABULARY in
+  # them is not neutral: it was written from Canadian practice, and a reader elsewhere
+  # may not recognise their own paperwork in it, or may wrongly think it describes them.
+  #
+  # A consumer with a REVIEWED pack substitutes local wording at the marked sites.
+  # A consumer with no reviewed pack uses what is here AND says on screen that the
+  # wording is unreviewed and may not match the reader's jurisdiction.
+  jurisdiction:
+    assumed: ca                 # unmarked legal assumptions are presumed Canadian
+    reviewed: false             # ⛔ no practitioner has reviewed phase-0 wording, in ANY jurisdiction
+    pack_available: false       # jurisdictions/ca/ is a skeleton — every answer UNANSWERED
+    # sites whose vocabulary a reviewed pack may replace. ⛔ Not a count — read the list.
+    # H0 says "arrested or charged" and H5 says "warrant": both are terms of art, both
+    # came from the same unreviewed Canadian practice as H1's, and a reader elsewhere may
+    # not recognise their own situation in either. The QUESTIONS are neutral and are the
+    # contract. O1 and L12 are deliberately NOT here: their document names are examples
+    # after a dash, and the question in front of the dash stands on its own anywhere.
+    wording_sites: [H0, H1, H2, X3, H5]
+
+# ---------------------------------------------------------------------------
+# PHASE 0 — HAZARD GATE. Runs first. Not skippable. RAILS 2, 9
+# ---------------------------------------------------------------------------
+phase_0_hazard:
+  # 🔴 FIRST NODE. Nothing before it, and the whole point is that it comes before
+  # the vocabulary. H1 asks about "release or bail condition, undertaking" and O1 about
+  # "anything you have been given" — both presuppose a stage nobody had established.
+  # A reader at "nothing formal yet" met four screens of words that did not describe
+  # them and could not tell whether that meant they were safe or the tool was confused.
+  #
+  # ⛔ It asks WHERE THEY ARE UP TO, never what happened. The answer is a stage, and a
+  # stage is not a case fact.
+  - id: H0
+    ask: "Where are you up to? Has anything formal happened yet?"
+    options: ["nothing formal yet", "spoken to but not arrested", "arrested or charged", "unsure"]
+    sets: stage
+    # ⚖️ pack_supplied wording. "arrested or charged" is a term of art and the ladder of
+    # stages before it differs by country. The QUESTION is: has anything official started.
+    # Pack: jurisdictions/<code>/01_hazard_wording.md §1
+    pack_supplied: [stage_names]
+    note_to_user: "Whatever you say here, everything below still applies. This only tells us which words will make sense to you."
+    next: H1
+
+  - id: H1
+    ask: "Are you under any court order, release or bail condition, undertaking, protection or restraining order, or a workplace directive?"
+    options: ["yes", "no", "unsure"]
+    # ⚖️ pack_supplied wording. "release or bail condition" and "undertaking" are Canadian
+    # terms of art. The QUESTION is: is there anything restricting what you may do or where
+    # you may go — including a non-criminal directive. A reader who recognises none of these
+    # words is still in scope. Pack: jurisdictions/<code>/01_hazard_wording.md §1
+    pack_supplied: [order_types]
+    branch:
+      "yes": {next: H2}
+      "unsure": {next: H2, set: {conditions_assumed: true}}
+      "no": {next: H3}
+
+  - id: H2
+    ask: "Does it include no-contact, non-association, or stay-away conditions?"
+    options: ["yes", "no", "unsure"]
+    # ⚖️ pack_supplied wording. Local names for the same three restriction classes vary.
+    # Pack: jurisdictions/<code>/01_hazard_wording.md §2
+    pack_supplied: [condition_types]
+    note_to_user: "We are not interpreting your conditions. Only your lawyer can. This just tells us which options to leave out."
+    branch:
+      "yes": {next: H3, set: {no_contact: true}}
+      "unsure": {next: H3, set: {no_contact: true}}   # fail safe
+      "no": {next: H3}
+
+  - id: H3
+    type: hard_exclusions      # displayed unconditionally, before any evidence question
+    items:
+      - id: X1
+        text: "Do not contact the other person. Any channel, any intermediary, no exceptions — including replying to them, and including through a friend or family member."
+      - id: X2
+        text: "Do not look at their accounts, profiles, or posts. Viewing can notify them, and some platforms add you to a conversation just for opening it."
+        why: "One of the most common ways people breach a condition without meaning to."
+      - id: X3
+        text: "Do not delete OR CANCEL anything — not a message, photo, app, booking, subscription, or calendar entry. Not even one that embarrasses you. Not even one you never created and never wanted."
+        why: "Deleting looks like consciousness of guilt and can be a separate offence. Cancelling is worse than useless: it often NOTIFIES the other side and can remove you from a channel in a way they see. Preserve, don't purge."
+        # ⚖️ pack_supplied: "can be a separate offence" is a LOCAL claim, unverified everywhere.
+        # The rest of this exclusion is universal, and the engine refuses to suggest deleting or
+        # cancelling regardless of any pack (see `never:` below). A pack may sharpen the reason,
+        # never remove the exclusion. Pack: jurisdictions/<code>/01_hazard_wording.md §5
+        pack_supplied: [breach_consequence_note]
+      - id: X4
+        text: "Read your e-mail normally. But do not CLICK a link in any message about this, and do not open or extract an attachment from one."
+        why: >
+          Reading is fine. A link is not: it often carries a code unique to you, so following it
+          writes a dated entry, TODAY, into the very record your lawyer is about to ask for. Save
+          the whole message as a file and let them open it. If you need to know where a link goes,
+          tell your lawyer rather than finding out.
+      - id: X5
+        text: "Do not create a second or anonymous account to look at anything."
+      - id: X6
+        text: "Do not explain yourself to police, an investigator, HR, or the other person's friends. Not to clear it up, not informally, not at your own door."
+        why: "Anything you say becomes a fixed account you are held to later — before you or your lawyer know what is actually alleged. You carry no burden to prove where you were."
+      - id: X7
+        text: >
+          Do not go anywhere you know the other person to be — including places you only recently
+          learned they go, and including a TYPE of place or area they are known to use, not just a
+          specific address.
+        why: "Being accused teaches you things you must now avoid, and you cannot un-learn them. The condition can bite on knowledge you only acquired because of the accusation."
+
+      - id: X8
+        text: "Do not try to tidy up or fix a shared group, album, folder, or subscription you are both in."
+        why: "Leaving, un-sharing, removing yourself and cancelling all NOTIFY. Trying to fix a hazard is usually a fresh, dated, attributable hazard. Tell your lawyer instead; leave it exactly as it is."
+
+      - id: X9
+        text: "Before signing up, booking, joining, or registering for anything at all, stop and check it against your conditions."
+        why: "One tap can put your name on a list, add you to a chat, or place you somewhere. This is the single most common way an ordinary day becomes an allegation."
+
+      - id: X10
+        text: "Do not consent to anyone searching or taking your phone or computer. Say you want your lawyer."
+        why: "Consent replaces the safeguards that would otherwise apply, and it cannot be withdrawn once the data is taken."
+
+      - id: X11
+        text: "Do not ask anyone what they remember, and do not ask anyone to write anything down for you."
+        why: "It can be characterised as coaching or interference, and it contaminates the very recollection you were hoping to preserve. Give your lawyer the names; they take the statements."
+
+      - id: X12
+        text: "If the other person contacts YOU, that is not your breach — but replying, even once, even to say stop, can be."
+        why: "Do not respond. Do not block-and-delete either: preserve it exactly as received and tell your lawyer the same day."
+
+      - id: X13
+        text: "Write down what you remember ONCE, as soon as possible, and then never improve it."
+        why: "A note that gets tidied, expanded or corrected later is worth far less than a rough one written immediately — and the edits themselves become a problem."
+
+      - id: X14
+        text: "If an allegation is dropped, withdrawn, or 'sorted out', change nothing. Keep every condition and keep every record."
+        why: "Nothing is over until your lawyer tells you it is over, in writing."
+    next: H5
+
+  # 🔴 PLACED AFTER H3 DELIBERATELY, NOT BEFORE IT. X10 — "do not consent to anyone
+  # searching or taking your phone or computer" — has to already be on screen when this
+  # is asked. Asked first, a person who has already let someone look reads it as an
+  # accusation. Asked here, it reads as the tool working out what it can safely do.
+  #
+  # ⛔ It decides ONE thing: whether this tool writes the location of their case folder
+  # anywhere outside that folder. It does not interpret, advise, or rank. Where files
+  # should physically live once a device may be examined is a legal question, and no pack
+  # has reviewed it, so the answer routes to counsel and no step is offered.
+  - id: H5
+    ask: "Has anyone asked to look at your phone or computer, taken one, or shown you a warrant for one?"
+    options: ["no", "asked but I refused", "yes, they have one or took one", "yes, I let them look", "unsure"]
+    # ⚖️ pack_supplied wording. "warrant" is a term of art and what authorises a device
+    # search, and who may ask, varies. The QUESTION is: is a device of yours exposed.
+    # Pack: jurisdictions/<code>/01_hazard_wording.md §1
+    pack_supplied: [device_search_authority]
+    note_to_user: "We are not interpreting anything and this changes nothing about your conditions. It only decides where this tool puts files and what it refuses to write down."
+    branch:
+      "no":                            {next: H4}
+      "asked but I refused":           {next: H4}
+      "yes, they have one or took one": {next: H4, set: {device_exposed: true}}
+      "yes, I let them look":           {next: H4, set: {device_exposed: true}}
+      "unsure":                        {next: H4, set: {device_exposed: true}}   # fail safe
+
+  - id: H4
+    ask: "Do you have a lawyer yet?"
+    options: ["yes", "no", "in progress"]
+    branch:
+      "no": {next: O1, set: {counsel: false, plan_mode: preservation_only}}
+      "in progress": {next: O1, set: {counsel: false, plan_mode: preservation_only}}
+      "yes": {next: O1, set: {counsel: true,  plan_mode: full}}
+
+# ---------------------------------------------------------------------------
+# PHASE 0c — POSITIVE OBLIGATIONS
+# A whole missing class: conditions impose DUTIES, not only prohibitions, and failing a
+# duty is a breach exactly like doing a forbidden thing. The tree previously asked only
+# about what the user must not do. Never interprets the obligation — surfaces the category
+# and routes to counsel.
+# ---------------------------------------------------------------------------
+phase_0c_positive_obligations:
+  - id: O1
+    ask: "Does anything you have been given require you to DO something — report, notify a change, surrender an item, attend somewhere, keep in touch with someone?"
+    options: ["yes", "no", "unsure"]
+    note_to_user: "Not doing a required thing counts the same as doing a forbidden thing. We are not interpreting your paperwork — only your lawyer can."
+    branch:
+      "yes":    {next: O2}
+      "unsure": {next: O2, set: {obligations_assumed: true}}
+      "no":     {next: O5}
+
+  - id: O2
+    ask: "Are any of them on a deadline or a schedule?"
+    options: ["yes", "no", "unsure"]
+    sets: has_scheduled_obligation
+    next: O3
+
+  - id: O3
+    type: guidance
+    text: "Put every required act and its date somewhere you cannot miss it, and tell your lawyer about each one. A missed date is the easiest breach there is."
+    next: O4
+
+  - id: O4
+    type: guidance
+    title: "Keep a proof ledger"
+    text: >
+      For every required act, keep proof you did it — a receipt, a confirmation, a sent
+      message, a photograph, a note of who you spoke to and when. Also record every
+      FAILED ATTEMPT: if you tried to comply and could not, that attempt is evidence and
+      it disappears if you do not write it down the same day.
+    next: O5
+
+  - id: O5
+    type: guidance
+    text: "If you are unsure whether something is required of you, ask your lawyer before the date passes — not after."
+    next: T1
+
+# ---------------------------------------------------------------------------
+# PHASE 1 — THE CLOCK
+# ---------------------------------------------------------------------------
+phase_1_clock:
+  - id: T1
+    ask: "Roughly when did the event you are being accused about happen?"
+    options: [today, "1-3 days ago", "4-14 days ago", "15-30 days ago", "1-6 months ago", "more than 6 months ago"]
+    sets: incident_age
+    drives: [countdown, action_order]
+
+  - id: T2
+    ask: "Is there a specific window in dispute — a date, and roughly which hours?"
+    options: ["yes", "no", "not known yet"]
+    branch:
+      "not known yet": {set: {widen_requests: true}}
+      "no":            {set: {widen_requests: true}}
+    note: "Widening every third-party request by a day either side is the default regardless. methods/03"
+
+# ---------------------------------------------------------------------------
+# PHASE 2 — LAYER AVAILABILITY
+# One question per layer. Answerable with no legal knowledge.
+# clock: HOURS | DAYS | WEEKS | MONTHS | STABLE   (typical only — never asserted as fact, RAIL 7)
+# ---------------------------------------------------------------------------
+phase_2_layers:
+  - id: L1
+    ask: "Were you wearing a smartwatch, fitness band, or smart ring during that time?"
+    layer: wearable_telemetry
+    density: highest
+    clock: MONTHS            # cloud history is long; export links expire fast once generated
+    double_edged: true       # methods/06 — helps on some claim types, harms on others
+    limits: [device_not_person, off_body_is_silence, resolution_gaps]
+    action: export_own_account_data
+
+  # 🔴 ONE QUESTION, ONE ANSWER SLOT. This node used to ask two things at once —
+  # "Did you have your phone with you? Is it Android or iPhone?" — with room for one
+  # answer. A reader replied "yes, android", which answers both, and was rejected with
+  # exit 2. The engine was right to refuse: it accepts one of its own options and does
+  # not guess, because reading a near-miss as a "yes" records an answer nobody gave. The
+  # defect was the question. The second half was never capturable by any legal answer.
+  - id: L2
+    ask: "Did you have your phone with you?"
+    layer: os_usage_log
+    density: high
+    clock: DAYS              # rolling. capture immediately
+    limits: [device_not_person, automated_events_look_like_activity]
+    action: capture_device_now
+    priority_note: "Shortest clock of any device-local layer. Do this first."
+    branch:
+      "yes":    {next: L2b}
+      "unsure": {next: L2b}   # "probably yes, go and check" — so we still need which one
+      "no":     {next: L3}
+
+  # ⛔ NOT A RECORD QUESTION. It declares no `layer:`, so it never becomes a step in
+  # anybody's plan and never gets a destination folder of its own. It is a qualifier on
+  # the node above it, and the one thing it buys is a search phrase that names the
+  # reader's actual phone instead of asking them to fill in a blank.
+  - id: L2b
+    ask: "Is it an Android or an iPhone?"
+    options: ["android", "iphone", "both", "unsure"]
+    sets: phone_platform
+    next: L3
+
+  - id: L3
+    ask: "Did you use a laptop or desktop around that time?"
+    layer: computer_power_log
+    density: medium
+    clock: WEEKS
+    limits: [screen_on_only, device_not_person]
+    action: capture_device_now
+
+  - id: L4
+    ask: "Were you messaging anyone about this, or with the other person?"
+    layer: chat_archive
+    density: medium
+    clock: STABLE
+    limits: [deletion_timing_unprovable, action_not_content_not_actor, block_visibility_asymmetric]
+    action: export_full_thread_with_media
+    warning: "Export the whole thread. Selected screenshots are worth close to nothing. Do NOT open the thread if a no-contact condition applies — ask your lawyer first."
+
+  - id: L5
+    ask: "Was any booking, registration, order, ride, or ticket involved?"
+    layer: platform_record
+    density: medium
+    clock: MONTHS
+    limits: [ui_label_is_not_a_field]
+    action: keep_original_email_not_screenshot
+    method_ref: methods/04
+
+  - id: L6
+    ask: "Were you in a building with door fobs or cameras — home, hotel, office, gym, or a venue?"
+    layer: premises_record
+    density: high
+    clock: DAYS              # commonly a ~14-day rolling loop
+    clock_flag: RED
+    limits: [held_by_third_party, standing_required]
+    action: preservation_demand
+    priority_note: "Most perishable layer that exists. If nothing else gets done today, do this."
+    method_ref: methods/03
+
+  - id: L7
+    ask: "Did you use a card, bank account, or transit pass during that window?"
+    layer: financial_spine
+    density: low
+    clock: STABLE
+    limits: [coarse_timing]
+    action: download_statements
+
+  - id: L8
+    ask: "Did you travel in or out around then?"
+    layer: travel_record
+    density: low
+    clock: STABLE
+    action: collect_bookings_and_passes
+
+  - id: L9
+    ask: "Did you take any photos or videos around that time?"
+    layer: media_metadata
+    density: medium
+    clock: STABLE
+    limits: [originals_only_screenshots_destroy_metadata]
+    fence: RAIL_6            # if it may contain intimate media: freeze unopened, route to examiner via counsel
+    action: preserve_originals_do_not_screenshot
+
+  - id: L10
+    ask: "Are there any injuries on your own body?"
+    layer: independent_medical
+    density: high
+    clock: HOURS
+    clock_flag: RED
+    limits: [does_not_decide_consent_claims]
+    action: see_a_clinician_today
+    priority_note: "Injuries heal in days. This is a today task, and it is the only layer that expires from your own body."
+
+  - id: L11
+    ask: "Did anyone see you, or were you with anyone?"
+    layer: witness_list
+    density: medium
+    clock: MONTHS            # memory degrades; contact details go stale
+    action: write_names_for_counsel
+    warning: "Write the names down for your lawyer. Do NOT approach anyone yourself."
+
+  # 🔴 A LAYER NODE, NOT A GUIDANCE NODE, AND THAT CHOICE IS LOAD-BEARING. The plan is
+  # derived entirely from the record questions, so a guidance node here would need the
+  # engine to special-case it — in a file whose own rule is that nothing is hard-coded to
+  # a record type. As a layer it inherits the destination folder, the printed row and the
+  # come-back check for free.
+  #
+  # STABLE puts it last in the ordered plan, which is right: it is already in their hand
+  # and it is not dying. What it was missing was a home. A reader finished the whole flow
+  # holding a printed condition sheet and was never once asked about it.
+  - id: L12
+    ask: "Were you given any paperwork — a form, a notice, a printed sheet of conditions, a card?"
+    layer: paperwork_you_hold
+    density: high
+    clock: STABLE
+    limits: [held_by_you_only]
+    action: keep_paperwork_you_were_given
+
+# ---------------------------------------------------------------------------
+# PHASE 3 — OUTPUT. Three blocks. Nothing else.
+# ---------------------------------------------------------------------------
+phase_3_output:
+  block_a:
+    id: do_now
+    title: "Do these now, in this order"
+    order_by: clock          # NOT by value. A medium record dying in 11 days beats a stable high one
+    per_item: [what_to_do, rough_effort, needs_lawyer]
+
+  block_b:
+    id: the_clock
+    title: "What is running out"
+    per_record: [estimated_remaining, source_of_estimate, verify_with_holder]
+    flag_under_days: 14
+    disclaimer: "Typical only. Verify with the holder. Never stated as fact. RAIL 7"
+
+  block_c:
+    id: coverage
+    title: "How much this can help"
+    counts:
+      - independent_layers_covering_window   # independence by device + subsystem, methods/05
+      - likely_silent                        # normal and honourable, say so plainly
+      - double_edged_flagged_for_counsel
+      - closed_by_your_conditions            # shown as closed WITH the reason, never hidden
+    forbidden: [strength, score, likelihood, percentage, prediction, case_assessment]
+    closing_text: >
+      This tells you what to save. It does not tell you how strong anything is, and it cannot
+      prove you did not do something. Nothing can.
+
+# ---------------------------------------------------------------------------
+# GLOBAL PROHIBITIONS — consumers must enforce
+# ---------------------------------------------------------------------------
+never:
+  # ⚖️ THE OPENNESS REVERSAL. ADR 0009, owner decision.
+  #
+  # This list used to open with `ask_what_happened`, `ask_who_was_involved` and
+  # `ask_what_was_alleged`. All three are gone, because they protected the wrong thing.
+  # The safety property was never the consumer's IGNORANCE — it was that a person cannot
+  # un-say something to a service somebody else runs. Silence bought that, and it bought
+  # it at the cost of the one job people arrive here to have done, which is help making
+  # sense of their own situation.
+  #
+  # So the gate moved from the QUESTION to the DISCLOSURE. Ask whatever helps, AFTER they
+  # have been told plainly who receives it and have decided for themselves. What is barred
+  # now is asking in the dark, and writing down what they said somewhere they were never
+  # told it would land. Both replacements below are testable against a transcript in a way
+  # "do not ask" never was.
+  - ask_for_detail_before_naming_who_receives_it
+  - write_volunteered_detail_where_the_person_was_not_told_it_lands
+  - store_or_transmit_answers
+  - produce_strength_or_score
+  - interpret_users_conditions
+  - recommend_anything_touching_counterparty   # ADR 0002
+  - suggest_deleting_or_cancelling_anything
+  - offer_channel_cleanup_or_remediation        # leaving/un-sharing/cancelling NOTIFIES
+  - fetch_remote_content_when_rendering_captured_material
+  - surface_any_location_habit_or_schedule_of_the_counterparty   # our own output is a knowledge vector
+  - auto_send_any_third_party_request           # generate + brief only; a request cannot be un-sent
+  - auto_label_consistent_or_in_tension         # only SILENT is auto-classified
+  - present_a_retention_period_as_fact
+  - ask_the_user_to_gather_anyone_elses_recollection
+  - imply_the_user_must_prove_absence

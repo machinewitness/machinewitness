@@ -1,0 +1,10 @@
+{
+  "name": "machine-witness",
+  "description": "Keep the record that already exists about your own life (your own devices, your own accounts, your own exports) before it is overwritten. Finds which records exist, says how fast each one runs out, says what not to touch, and makes sealed copies with a written record of exactly what was copied, so a later change to them can be shown. Produces a record, never a verdict.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Machine Witness contributors"
+  },
+  "license": "MIT",
+  "skills": "./.claude/skills/"
+}
